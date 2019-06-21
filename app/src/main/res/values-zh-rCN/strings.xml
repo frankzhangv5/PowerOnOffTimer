@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">定时开关机</string>
+
+    <string name="current_time">当前时间：</string>
+
+    <string name="timer_mode">模式：</string>
+    <string name="mode_weekly">星期</string>
+    <string name="mode_daily">每天</string>
+
+    <string name="timer_repeat">重复：</string>
+    <string name="repeat_sunday">周日</string>
+    <string name="repeat_monday">周一</string>
+    <string name="repeat_tuesday">周二</string>
+    <string name="repeat_wednesday">周三</string>
+    <string name="repeat_thursday">周四</string>
+    <string name="repeat_friday">周五</string>
+    <string name="repeat_saturday">周六</string>
+
+    <string name="time_power_on">开机：</string>
+    <string name="time_power_off">关机：</string>
+    <string name="time_choose">选择时间</string>
+
+    <string name="submit">确定</string>
+    <string name="clear">清除数据（永不关机）</string>
+</resources>
