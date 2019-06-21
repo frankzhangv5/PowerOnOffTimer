@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         Log.d(TAG, buttonView.getText() + ".isChecked:" + isChecked);
-        if(isChecked) {
+        if(!isChecked) {
             switch (buttonView.getId()) {
                 case R.id.cb_sunday: {
                     editor.remove(REPEAT_SUNDAY);

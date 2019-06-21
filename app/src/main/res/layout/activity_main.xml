@@ -24,7 +24,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="start"
-            android:format12Hour="yyyy/dd/MM h:mm a"
+            android:format12Hour="yyyy/MM/dd h:mm a"
             android:textStyle="normal"
             android:fontFamily="sans-serif-light"
             android:textSize="32sp" />
