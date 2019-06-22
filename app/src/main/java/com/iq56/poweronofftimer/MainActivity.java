@@ -1,11 +1,12 @@
 package com.iq56.poweronofftimer;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.app.TimePickerDialog;
-import android.content.Context;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -19,12 +20,9 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
-import java.util.Calendar;
+import static com.iq56.poweronofftimer.Utils.*;
 
 public class MainActivity extends AppCompatActivity implements OnClickListener, CompoundButton.OnCheckedChangeListener {
-
-
-    private static final String TAG = "PowerOnOffAlarm";
 
     private Button btnSelectPowerOnTime, btnSelectPowerOffTime, btnSubmit, btnClear;
 
@@ -34,73 +32,78 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
 
     private TextView txtPowerOnTime, txtPowerOffTime;
 
-    public static final String ACTION_POWER_ON = "com.iq56.poweronofftimer.poweron";
-    public static final String ACTION_POWER_OFF = "com.iq56.poweronofftimer.poweroff";
 
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
 
-    public static final String KEY_POWER_ON_HOUR = "poweron_hour";
-    public static final String KEY_POWER_ON_MINUTE = "poweron_minute";
-    public static final String KEY_POWER_OFF_HOUR = "poweroff_hour";
-    public static final String KEY_POWER_OFF_MINUTE = "poweroff_minute";
 
-    public static final String KEY_MODE = "timer_mode";
-    public static final String MODE_DAILY = "daily";
-    public static final String MODE_WEEKLY = "weekly";
+    private IAlarmServiceInterface mService;
 
-    public static final String KEY_REPEAT = "timer_repeat";
-    public static final String REPEAT_SUNDAY = "repeat_sunday";
-    public static final String REPEAT_MONDAY = "repeat_monday";
-    public static final String REPEAT_TUESDAY = "repeat_tuesday";
-    public static final String REPEAT_WEDNESDAY = "repeat_wednesday";
-    public static final String REPEAT_THURSAY = "repeat_thursday";
-    public static final String REPEAT_FRIDAY = "repeat_friday";
-    public static final String REPEAT_SATURDAY = "repeat_saturday";
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.i(TAG, "onServiceConnected");
+            mService = IAlarmServiceInterface.Stub.asInterface(service);
+        }
 
-    public static final String[] WEEKDAYS = {"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"};
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.i(TAG, "onServiceDisconnected");
+            mService = null;
+        }
+    };
 
-    public static final int REQUEST_CODE_POWER_ON_OFF = 101;
-
-    private static final int ONE_DAY_INTERVAL = 1000 * 60 * 60 * 24;// 24h
-    private static final int ONE_WEEK_INTERVAL = ONE_DAY_INTERVAL * 7;// A WEEK
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Intent serviceIntent = new Intent(this, AlarmService.class);
+        serviceIntent.setAction(IAlarmServiceInterface.class.getName());
+        bindService(serviceIntent, mServiceConnection, BIND_AUTO_CREATE);
+
         sharedPreferences = getSharedPreferences(this.getPackageName(), MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
-        btnSelectPowerOnTime = (Button)findViewById(R.id.btn_select_poweron_time);
-        btnSelectPowerOffTime = (Button)findViewById(R.id.btn_select_poweroff_time);
+        btnSelectPowerOnTime = (Button) findViewById(R.id.btn_select_poweron_time);
+        btnSelectPowerOffTime = (Button) findViewById(R.id.btn_select_poweroff_time);
 
         btnSelectPowerOnTime.setOnClickListener(this);
         btnSelectPowerOffTime.setOnClickListener(this);
 
         btnSubmit = (Button) findViewById(R.id.btn_submit);
-        btnClear = (Button)findViewById(R.id.btn_clear);
+        btnClear = (Button) findViewById(R.id.btn_clear);
 
         btnSubmit.setOnClickListener(this);
         btnClear.setOnClickListener(this);
 
-        radioGroupMode = (RadioGroup)findViewById(R.id.mode_group);
+        radioGroupMode = (RadioGroup) findViewById(R.id.mode_group);
 
-        btnSunday = (CheckBox)findViewById(R.id.cb_sunday);
-        btnMonday = (CheckBox)findViewById(R.id.cb_monday);
-        btnTuesDay = (CheckBox)findViewById(R.id.cb_tuesday);
-        btnWednesday = (CheckBox)findViewById(R.id.cb_wednesday);
-        btnThursday = (CheckBox)findViewById(R.id.cb_thursday);
-        btnFriday = (CheckBox)findViewById(R.id.cb_friday);
-        btnSaturday = (CheckBox)findViewById(R.id.cb_saturday);
+        btnSunday = (CheckBox) findViewById(R.id.cb_sunday);
+        btnMonday = (CheckBox) findViewById(R.id.cb_monday);
+        btnTuesDay = (CheckBox) findViewById(R.id.cb_tuesday);
+        btnWednesday = (CheckBox) findViewById(R.id.cb_wednesday);
+        btnThursday = (CheckBox) findViewById(R.id.cb_thursday);
+        btnFriday = (CheckBox) findViewById(R.id.cb_friday);
+        btnSaturday = (CheckBox) findViewById(R.id.cb_saturday);
 
+        txtPowerOnTime = (TextView) findViewById(R.id.txt_poweron_time);
+        txtPowerOffTime = (TextView) findViewById(R.id.txt_poweroff_time);
+
+        initUI();
+
+        Utils.dump(sharedPreferences, "onCreated");
+    }
+
+
+    private void initUI() {
         final CheckBox[] weekdayCheckBoxs = {btnSunday, btnMonday, btnTuesDay, btnWednesday, btnThursday, btnFriday, btnSaturday};
 
         String mode = sharedPreferences.getString(KEY_MODE, "");
-        if(MODE_DAILY.equals(mode)) {
+        if (MODE_DAILY.equals(mode)) {
             radioGroupMode.check(R.id.btn_daily);
-        } else if(MODE_WEEKLY.equals(mode)) {
+        } else if (MODE_WEEKLY.equals(mode)) {
             radioGroupMode.check(R.id.btn_weekly);
         } else {
             radioGroupMode.check(R.id.btn_daily);
@@ -109,16 +112,16 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
         radioGroupMode.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, int checkedId) {
-                if(R.id.btn_weekly == checkedId) {
+                if (R.id.btn_weekly == checkedId) {
 
-                    for(int i = 0; i < 7; i++) {
+                    for (int i = 0; i < 7; i++) {
                         weekdayCheckBoxs[i].setClickable(true);
                     }
 
                     editor.putString(KEY_MODE, MODE_WEEKLY);
                     editor.commit();
                 } else {
-                    for(int i = 0; i < 7; i++) {
+                    for (int i = 0; i < 7; i++) {
                         weekdayCheckBoxs[i].setClickable(false);
                     }
 
@@ -129,28 +132,23 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
         });
 
 
-
-        for(int i = 0; i < 7; i++) {
+        for (int i = 0; i < 7; i++) {
             weekdayCheckBoxs[i].setOnCheckedChangeListener(this);
         }
 
-        for(int i = 0; i < 7; i++) {
+        for (int i = 0; i < 7; i++) {
             boolean ret = sharedPreferences.getBoolean("repeat_" + WEEKDAYS[i], false);
-            if(ret) {
+            if (ret) {
                 weekdayCheckBoxs[i].setChecked(true);
             }
         }
 
 
-        if(! MODE_WEEKLY.equals(mode)) {
-            for(int i = 0; i < 7; i++) {
+        if (!MODE_WEEKLY.equals(mode)) {
+            for (int i = 0; i < 7; i++) {
                 weekdayCheckBoxs[i].setClickable(false);
             }
         }
-
-
-        txtPowerOnTime = (TextView) findViewById(R.id.txt_poweron_time);
-        txtPowerOffTime = (TextView) findViewById(R.id.txt_poweroff_time);
 
         int powerOnHour = sharedPreferences.getInt(KEY_POWER_ON_HOUR, 7);
         int powerOnMinute = sharedPreferences.getInt(KEY_POWER_ON_MINUTE, 30);
@@ -159,15 +157,12 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
 
         txtPowerOnTime.setText(String.format("%2d:%2d", powerOnHour, powerOnMinute));
         txtPowerOffTime.setText(String.format("%2d:%2d", powerOffHour, powerOffMinute));
-
-        dump("onCreated");
     }
-
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         Log.d(TAG, buttonView.getText() + ".isChecked:" + isChecked);
-        if(!isChecked) {
+        if (!isChecked) {
             switch (buttonView.getId()) {
                 case R.id.cb_sunday: {
                     editor.remove(REPEAT_SUNDAY);
@@ -202,31 +197,31 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
         } else {
             switch (buttonView.getId()) {
                 case R.id.cb_sunday: {
-                    editor.putBoolean(REPEAT_SUNDAY,true);
+                    editor.putBoolean(REPEAT_SUNDAY, true);
                     break;
                 }
                 case R.id.cb_monday: {
-                    editor.putBoolean(REPEAT_MONDAY,true);
+                    editor.putBoolean(REPEAT_MONDAY, true);
                     break;
                 }
                 case R.id.cb_tuesday: {
-                    editor.putBoolean(REPEAT_TUESDAY,true);
+                    editor.putBoolean(REPEAT_TUESDAY, true);
                     break;
                 }
                 case R.id.cb_wednesday: {
-                    editor.putBoolean(REPEAT_WEDNESDAY,true);
+                    editor.putBoolean(REPEAT_WEDNESDAY, true);
                     break;
                 }
                 case R.id.cb_thursday: {
-                    editor.putBoolean(REPEAT_THURSAY,true);
+                    editor.putBoolean(REPEAT_THURSAY, true);
                     break;
                 }
                 case R.id.cb_friday: {
-                    editor.putBoolean(REPEAT_FRIDAY,true);
+                    editor.putBoolean(REPEAT_FRIDAY, true);
                     break;
                 }
                 case R.id.cb_saturday: {
-                    editor.putBoolean(REPEAT_SATURDAY,true);
+                    editor.putBoolean(REPEAT_SATURDAY, true);
                     break;
                 }
             }
@@ -240,7 +235,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_select_poweron_time: {
-                TimePickerDialog time=new TimePickerDialog(MainActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                TimePickerDialog time = new TimePickerDialog(MainActivity.this, new TimePickerDialog.OnTimeSetListener() {
 
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
@@ -255,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
                 break;
             }
             case R.id.btn_select_poweroff_time: {
-                TimePickerDialog time=new TimePickerDialog(MainActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                TimePickerDialog time = new TimePickerDialog(MainActivity.this, new TimePickerDialog.OnTimeSetListener() {
 
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
@@ -271,194 +266,46 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
             }
 
             case R.id.btn_submit: {
-                dump("beforeSubmit");
-                String mode = sharedPreferences.getString(KEY_MODE, "");
-
-                if(MODE_DAILY.equals(mode)) {
-
-                    setDailyAlarm();
-
-                } else if(MODE_WEEKLY.equals(mode)) {
-
-                    for(int i = 0; i < 7; i++) {
-                        boolean ret = sharedPreferences.getBoolean("repeat_" + WEEKDAYS[i], false);
-                        if(ret) {
-                            setWeeklyAlarm(i + 1);
-                        }
+                editor.putBoolean(KEY_ALLOWED_POWER_ONOFF, true);
+                editor.commit();
+                if (null != mService) {
+                    try {
+                        mService.setAlarm();
+                    } catch (RemoteException e) {
+                        Toast.makeText(MainActivity.this, "Set Alarm Failed", Toast.LENGTH_LONG).show();
                     }
                 } else {
-                    Toast.makeText(MainActivity.this, "Repeat mode set to daily default !", Toast.LENGTH_SHORT).show();
-
-                    editor.putString(KEY_MODE, MODE_DAILY);
-                    editor.commit();
-
-                    setDailyAlarm();
+                    Toast.makeText(MainActivity.this, "Service NOT connected", Toast.LENGTH_LONG).show();
                 }
 
                 break;
             }
             case R.id.btn_clear: {
-                dump("beforeClearAll");
-                cancleAllAlarm();
+
+
+                Utils.dump(sharedPreferences, "beforeClearAll");
+
+                if (null != mService) {
+                    try {
+                        mService.clearAllAlarm();
+                    } catch (RemoteException e) {
+                        Toast.makeText(MainActivity.this, "Clear Alarm Failed", Toast.LENGTH_LONG).show();
+                    }
+                } else {
+                    Toast.makeText(MainActivity.this, "Service NOT connected", Toast.LENGTH_LONG).show();
+                }
+
+                initUI();
+
+                editor.clear();
+                editor.commit();
             }
         }
     }
 
-    private void cancleAllAlarm() {
-        Intent powerOnIntent = new Intent(MainActivity.this, PowerOnOffAlarm.class);
-        powerOnIntent.setAction(ACTION_POWER_ON);
-        PendingIntent powerOnSender = PendingIntent.getBroadcast(MainActivity.this,
-                REQUEST_CODE_POWER_ON_OFF, powerOnIntent, PendingIntent.FLAG_NO_CREATE);
-
-        // Schedule the alarm!
-        AlarmManager am = (AlarmManager) MainActivity.this
-                .getSystemService(Context.ALARM_SERVICE);
-        am.cancel(powerOnSender);
-
-        Intent powerOffIntent = new Intent(MainActivity.this, PowerOnOffAlarm.class);
-        powerOffIntent.setAction(ACTION_POWER_OFF);
-        PendingIntent powerOffSender = PendingIntent.getBroadcast(MainActivity.this,
-                REQUEST_CODE_POWER_ON_OFF, powerOffIntent, PendingIntent.FLAG_NO_CREATE);
-
-
-        am.cancel(powerOffSender);
-    }
-
-    private void setDailyAlarm() {
-        int powerOnHour = sharedPreferences.getInt(KEY_POWER_ON_HOUR, 7);
-        int powerOnMinute = sharedPreferences.getInt(KEY_POWER_ON_MINUTE, 30);
-        int powerOffHour = sharedPreferences.getInt(KEY_POWER_OFF_HOUR, 21);
-        int powerOffMinute = sharedPreferences.getInt(KEY_POWER_OFF_MINUTE, 30);
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, powerOnHour);
-        calendar.set(Calendar.MINUTE, powerOnMinute);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-
-        Intent powerOnIntent = new Intent(MainActivity.this, PowerOnOffAlarm.class);
-        powerOnIntent.setAction(ACTION_POWER_ON);
-        PendingIntent powerOnSender = PendingIntent.getBroadcast(MainActivity.this,
-                REQUEST_CODE_POWER_ON_OFF, powerOnIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-
-        // Schedule the alarm!
-        AlarmManager am = (AlarmManager) MainActivity.this
-                .getSystemService(Context.ALARM_SERVICE);
-        am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-                ONE_DAY_INTERVAL, powerOnSender);
-
-        Intent powerOffIntent = new Intent(MainActivity.this, PowerOnOffAlarm.class);
-        powerOffIntent.setAction(ACTION_POWER_OFF);
-        PendingIntent powerOffSender = PendingIntent.getBroadcast(MainActivity.this,
-                REQUEST_CODE_POWER_ON_OFF, powerOffIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-
-        calendar.set(Calendar.HOUR_OF_DAY, powerOffHour);
-        calendar.set(Calendar.MINUTE, powerOffMinute);
-
-        am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-                ONE_DAY_INTERVAL, powerOffSender);
-    }
-
-    private void setWeeklyAlarm(int dayOfWeek) {
-        int powerOnHour = sharedPreferences.getInt(KEY_POWER_ON_HOUR, 7);
-        int powerOnMinute = sharedPreferences.getInt(KEY_POWER_ON_MINUTE, 30);
-        int powerOffHour = sharedPreferences.getInt(KEY_POWER_OFF_HOUR, 21);
-        int powerOffMinute = sharedPreferences.getInt(KEY_POWER_OFF_MINUTE, 30);
-
-        final Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.DAY_OF_WEEK, dayOfWeek);
-        calendar.set(Calendar.HOUR_OF_DAY, powerOnHour);
-        calendar.set(Calendar.MINUTE, powerOnMinute);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-
-        Intent powerOnIntent = new Intent(MainActivity.this, PowerOnOffAlarm.class);
-        powerOnIntent.setAction(ACTION_POWER_ON);
-        PendingIntent powerOnSender = PendingIntent.getBroadcast(MainActivity.this,
-                REQUEST_CODE_POWER_ON_OFF, powerOnIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-
-        AlarmManager am = (AlarmManager) MainActivity.this
-                .getSystemService(Context.ALARM_SERVICE);
-        am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-                ONE_WEEK_INTERVAL, powerOnSender);
-
-
-        calendar.set(Calendar.HOUR_OF_DAY, powerOffHour);
-        calendar.set(Calendar.MINUTE, powerOffMinute);
-
-        Intent powerOffIntent = new Intent(MainActivity.this, PowerOnOffAlarm.class);
-        powerOffIntent.setAction(ACTION_POWER_OFF);
-        PendingIntent powerOffSender = PendingIntent.getBroadcast(MainActivity.this,
-                REQUEST_CODE_POWER_ON_OFF, powerOffIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-                ONE_WEEK_INTERVAL, powerOffSender);
-    }
-
-    private void dump(String title) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(title);
-        sb.append(":\n");
-
-        sb.append(KEY_MODE);
-        sb.append(":");
-        sb.append(sharedPreferences.getString(KEY_MODE,""));
-        sb.append("\n");
-
-        sb.append(REPEAT_SUNDAY);
-        sb.append(":");
-        sb.append(sharedPreferences.getBoolean(REPEAT_SUNDAY,false));
-        sb.append("\n");
-
-        sb.append(REPEAT_MONDAY);
-        sb.append(":");
-        sb.append(sharedPreferences.getBoolean(REPEAT_MONDAY,false));
-        sb.append("\n");
-
-        sb.append(REPEAT_TUESDAY);
-        sb.append(":");
-        sb.append(sharedPreferences.getBoolean(REPEAT_TUESDAY,false));
-        sb.append("\n");
-
-        sb.append(REPEAT_WEDNESDAY);
-        sb.append(":");
-        sb.append(sharedPreferences.getBoolean(REPEAT_WEDNESDAY,false));
-        sb.append("\n");
-
-        sb.append(REPEAT_THURSAY);
-        sb.append(":");
-        sb.append(sharedPreferences.getBoolean(REPEAT_THURSAY,false));
-        sb.append("\n");
-
-        sb.append(REPEAT_FRIDAY);
-        sb.append(":");
-        sb.append(sharedPreferences.getBoolean(REPEAT_FRIDAY,false));
-        sb.append("\n");
-
-        sb.append(REPEAT_SATURDAY);
-        sb.append(":");
-        sb.append(sharedPreferences.getBoolean(REPEAT_SATURDAY,false));
-        sb.append("\n");
-
-        sb.append(KEY_POWER_ON_HOUR);
-        sb.append(":");
-        sb.append(sharedPreferences.getInt(KEY_POWER_ON_HOUR,-1));
-        sb.append("\n");
-
-        sb.append(KEY_POWER_ON_MINUTE);
-        sb.append(":");
-        sb.append(sharedPreferences.getInt(KEY_POWER_ON_MINUTE,-1));
-        sb.append("\n");
-
-        sb.append(KEY_POWER_OFF_HOUR);
-        sb.append(":");
-        sb.append(sharedPreferences.getInt(KEY_POWER_OFF_HOUR,-1));
-        sb.append("\n");
-
-        sb.append(KEY_POWER_OFF_MINUTE);
-        sb.append(":");
-        sb.append(sharedPreferences.getInt(KEY_POWER_OFF_MINUTE,-1));
-        sb.append("\n");
-
-        Log.i(TAG, sb.toString());
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(mServiceConnection);
     }
 }
