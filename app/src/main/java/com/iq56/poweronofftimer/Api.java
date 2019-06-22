@@ -72,7 +72,7 @@ public class Api {
                 int poweronTime[] = {year, month, day, hour, minute};
                 Log.i(TAG, "sendClearPowerOnBroadcast : " + Arrays.toString(poweronTime));
                 Intent intent = new Intent(ACTION_SET_POWERONOFF);
-                intent.putExtra(EXTRA_TIME_OFF, poweronTime);
+                intent.putExtra(EXTRA_TIME_ON, poweronTime);
                 intent.putExtra(EXTRA_ENABLE, false);
                 mContext.sendBroadcast(intent);
             }
