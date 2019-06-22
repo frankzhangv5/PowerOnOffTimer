@@ -9,8 +9,8 @@ import android.util.Log;
 import java.util.Arrays;
 import java.util.Calendar;
 
-import static com.iq56.poweronofftimer.Utils.KEY_ALLOWED_POWER_ONOFF;
 import static com.iq56.poweronofftimer.Utils.TAG;
+import static com.iq56.poweronofftimer.Utils.KEY_ALLOWED_POWER_ONOFF;
 import static com.iq56.poweronofftimer.Utils.ACTION_POWER_ON;
 import static com.iq56.poweronofftimer.Utils.ACTION_POWER_OFF;
 import static com.iq56.poweronofftimer.Utils.KEY_POWERON_TIME;
@@ -21,11 +21,13 @@ public class PowerOnOffAlarm extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+
         String action = intent.getAction();
         Log.i(TAG, "onReceive: " + intent);
 
         if (ACTION_POWER_ON.equals(action)) {
             SharedPreferences sharedPreferences = context.getSharedPreferences(context.getPackageName(), Context.MODE_PRIVATE);
+
             boolean allowPowerOnOff = sharedPreferences.getBoolean(KEY_ALLOWED_POWER_ONOFF, false);
             if (!allowPowerOnOff) {
                 Log.e(TAG, "not allowed to power on/off");
@@ -46,6 +48,7 @@ public class PowerOnOffAlarm extends BroadcastReceiver {
             new Api(context).sendSetPowerOnBroadcast(poweronTime);
         } else if (ACTION_POWER_OFF.equals(action)) {
             SharedPreferences sharedPreferences = context.getSharedPreferences(context.getPackageName(), Context.MODE_PRIVATE);
+
             boolean allowPowerOnOff = sharedPreferences.getBoolean(KEY_ALLOWED_POWER_ONOFF, false);
             if (!allowPowerOnOff) {
                 Log.e(TAG, "not allowed to power on/off");

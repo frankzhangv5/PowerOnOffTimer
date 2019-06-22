@@ -32,13 +32,10 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
 
     private TextView txtPowerOnTime, txtPowerOffTime;
 
-
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
 
-
     private IAlarmServiceInterface mService;
-
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -52,7 +49,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
             mService = null;
         }
     };
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,11 +92,11 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
         Utils.dump(sharedPreferences, "onCreated");
     }
 
-
     private void initUI() {
         final CheckBox[] weekdayCheckBoxs = {btnSunday, btnMonday, btnTuesDay, btnWednesday, btnThursday, btnFriday, btnSaturday};
 
         String mode = sharedPreferences.getString(KEY_MODE, "");
+
         if (MODE_DAILY.equals(mode)) {
             radioGroupMode.check(R.id.btn_daily);
         } else if (MODE_WEEKLY.equals(mode)) {
@@ -131,7 +127,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
             }
         });
 
-
         for (int i = 0; i < 7; i++) {
             weekdayCheckBoxs[i].setOnCheckedChangeListener(this);
         }
@@ -142,7 +137,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
                 weekdayCheckBoxs[i].setChecked(true);
             }
         }
-
 
         if (!MODE_WEEKLY.equals(mode)) {
             for (int i = 0; i < 7; i++) {
@@ -161,7 +155,9 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
         Log.d(TAG, buttonView.getText() + ".isChecked:" + isChecked);
+
         if (!isChecked) {
             switch (buttonView.getId()) {
                 case R.id.cb_sunday: {
@@ -227,7 +223,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
             }
             editor.commit();
         }
-
     }
 
 
@@ -264,10 +259,11 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
                 time.show();
                 break;
             }
-
             case R.id.btn_submit: {
+
                 editor.putBoolean(KEY_ALLOWED_POWER_ONOFF, true);
                 editor.commit();
+
                 if (null != mService) {
                     try {
                         mService.setAlarm();
@@ -282,9 +278,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
             }
             case R.id.btn_clear: {
 
-
-                Utils.dump(sharedPreferences, "beforeClearAll");
-
                 if (null != mService) {
                     try {
                         mService.clearAllAlarm();
@@ -295,10 +288,10 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
                     Toast.makeText(MainActivity.this, "Service NOT connected", Toast.LENGTH_LONG).show();
                 }
 
-                initUI();
-
                 editor.clear();
                 editor.commit();
+
+                initUI();
             }
         }
     }

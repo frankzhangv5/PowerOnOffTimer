@@ -42,7 +42,6 @@ public class AlarmService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
 
-
         return new IAlarmServiceInterface.Stub() {
 
             @Override
@@ -58,7 +57,6 @@ public class AlarmService extends Service {
             }
         };
     }
-
 
     private void setAlarmByService() {
         Utils.dump(sharedPreferences, "beforeSetAlarm");
@@ -109,7 +107,6 @@ public class AlarmService extends Service {
         powerOffIntent.setAction(ACTION_POWER_OFF);
         PendingIntent powerOffSender = PendingIntent.getBroadcast(AlarmService.this,
                 REQUEST_CODE_POWER_ON_OFF, powerOffIntent, PendingIntent.FLAG_NO_CREATE);
-
 
         am.cancel(powerOffSender);
 
