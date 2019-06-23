@@ -98,6 +98,19 @@
             android:layout_height="wrap_content"
             android:text="@string/repeat_tuesday"
             android:textSize="@dimen/text_size_content" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="@dimen/title_width"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:textSize="@dimen/text_size_title" />
 
         <CheckBox
             android:id="@+id/cb_wednesday"
@@ -119,6 +132,20 @@
             android:layout_height="wrap_content"
             android:text="@string/repeat_friday"
             android:textSize="@dimen/text_size_content" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="@dimen/title_width"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:textSize="@dimen/text_size_title" />
 
         <CheckBox
             android:id="@+id/cb_saturday"
@@ -146,8 +173,8 @@
 
         <Button
             android:id="@+id/btn_select_poweron_time"
-            style="@style/choose"
             android:layout_width="@dimen/title_width"
+            style="@style/choose"
             android:layout_height="wrap_content"
             android:text="@string/time_choose"
             android:textSize="@dimen/text_size_subtitle"></Button>
@@ -193,11 +220,11 @@
 
     <Button
         android:id="@+id/btn_submit"
-        style="@style/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/submit_margin_top"
         android:layout_marginBottom="@dimen/button_margin_bottom"
+        style="@style/button"
+        android:layout_marginTop="@dimen/submit_margin_top"
         android:text="@string/submit"
         android:textSize="@dimen/text_size_subtitle"></Button>
 

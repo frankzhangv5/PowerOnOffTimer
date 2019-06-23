@@ -149,8 +149,8 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
         int powerOffHour = sharedPreferences.getInt(KEY_POWER_OFF_HOUR, 21);
         int powerOffMinute = sharedPreferences.getInt(KEY_POWER_OFF_MINUTE, 30);
 
-        txtPowerOnTime.setText(String.format("%2d:%2d", powerOnHour, powerOnMinute));
-        txtPowerOffTime.setText(String.format("%2d:%2d", powerOffHour, powerOffMinute));
+        txtPowerOnTime.setText(String.format("%02d:%02d", powerOnHour, powerOnMinute));
+        txtPowerOffTime.setText(String.format("%02d:%02d", powerOffHour, powerOffMinute));
     }
 
     @Override
@@ -234,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
 
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                        txtPowerOnTime.setText(String.format("%2d:%2d", hourOfDay, minute));
+                        txtPowerOnTime.setText(String.format("%02d:%02d", hourOfDay, minute));
 
                         editor.putInt(KEY_POWER_ON_HOUR, hourOfDay);
                         editor.putInt(KEY_POWER_ON_MINUTE, minute);
@@ -249,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
 
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                        txtPowerOffTime.setText(String.format("%2d:%2d", hourOfDay, minute));
+                        txtPowerOffTime.setText(String.format("%02d:%02d", hourOfDay, minute));
 
                         editor.putInt(KEY_POWER_OFF_HOUR, hourOfDay);
                         editor.putInt(KEY_POWER_OFF_MINUTE, minute);
@@ -292,6 +292,8 @@ public class MainActivity extends AppCompatActivity implements OnClickListener, 
                 editor.commit();
 
                 initUI();
+
+                break;
             }
         }
     }
