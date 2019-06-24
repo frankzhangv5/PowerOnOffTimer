@@ -121,12 +121,12 @@ public class Utils {
 
         sb.append(KEY_POWERON_TIME);
         sb.append(":");
-        sb.append(sharedPreferences.getString(KEY_ALLOWED_POWER_ONOFF, ""));
+        sb.append(sharedPreferences.getString(KEY_POWERON_TIME, ""));
         sb.append("\n");
 
         sb.append(KEY_POWEROFF_TIME);
         sb.append(":");
-        sb.append(sharedPreferences.getString(KEY_ALLOWED_POWER_ONOFF, ""));
+        sb.append(sharedPreferences.getString(KEY_POWEROFF_TIME, ""));
         sb.append("\n");
 
         sb.append("=====================================");

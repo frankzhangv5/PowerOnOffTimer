@@ -10,6 +10,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.Arrays;
 import java.util.Calendar;
 
 import static com.iq56.poweronofftimer.Utils.*;
@@ -89,6 +90,23 @@ public class AlarmService extends Service {
 
             setDailyAlarm();
         }
+
+        int powerOnHour = sharedPreferences.getInt(KEY_POWER_ON_HOUR, 7);
+        int powerOnMinute = sharedPreferences.getInt(KEY_POWER_ON_MINUTE, 30);
+        int powerOffHour = sharedPreferences.getInt(KEY_POWER_OFF_HOUR, 21);
+        int powerOffMinute = sharedPreferences.getInt(KEY_POWER_OFF_MINUTE, 30);
+
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH) + 1;
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+        int[] poweronTime = {year, month , day, powerOnHour, powerOnMinute};
+        int[] poweroffTime = {year, month , day, powerOffHour, powerOffMinute};
+        new Api(AlarmService.this).sendSetPowerOnOffBroadcast(poweronTime, poweroffTime);
+
+        sharedPreferences.edit().putString(KEY_POWERON_TIME, Arrays.toString(poweronTime)).commit();
+        sharedPreferences.edit().putString(KEY_POWEROFF_TIME, Arrays.toString(poweroffTime)).commit();
     }
 
     public void clearAllAlarmByService() {
@@ -146,6 +164,8 @@ public class AlarmService extends Service {
 
         am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
                 ONE_DAY_INTERVAL, powerOffSender);
+
+
     }
 
     private void setWeeklyAlarm(int dayOfWeek) {

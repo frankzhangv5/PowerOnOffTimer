@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">PowerOnOffTimer</string>
+
+    <string name="current_time">CurrTime:</string>
+
+    <string name="timer_mode">Mode:</string>
+    <string name="mode_weekly">Weekly</string>
+    <string name="mode_daily">Daily</string>
+
+    <string name="timer_repeat">Repeat:</string>
+    <string name="repeat_sunday">Sun.</string>
+    <string name="repeat_monday">Mon.</string>
+    <string name="repeat_tuesday">Tues.</string>
+    <string name="repeat_wednesday">Wed.</string>
+    <string name="repeat_thursday">Thurs.</string>
+    <string name="repeat_friday">Fri.</string>
+    <string name="repeat_saturday">Sat.</string>
+
+    <string name="time_power_on">Power On:</string>
+    <string name="time_power_off">Power Off:</string>
+    <string name="time_choose">Set Time</string>
+
+    <string name="submit">Submit</string>
+    <string name="clear">Clear All(Never power off)</string>
+</resources>
