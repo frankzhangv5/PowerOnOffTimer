@@ -44,7 +44,7 @@ public class Api {
      * @param datetime [year,month,day, hour,minute]
      */
     public void sendSetPowerOffBroadcast(int[] datetime) {
-        Log.i(TAG, "sendSetPowerOnBroadcast : " + Arrays.toString(datetime));
+        Log.i(TAG, "sendSetPowerOffBroadcast : " + Arrays.toString(datetime));
         Intent intent = new Intent(ACTION_SET_POWERONOFF);
         intent.putExtra(EXTRA_TIME_OFF, datetime);
         intent.putExtra(EXTRA_ENABLE, true);

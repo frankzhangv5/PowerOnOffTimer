@@ -60,7 +60,7 @@ public class PowerOnOffAlarm extends BroadcastReceiver {
             int month = calendar.get(Calendar.MONTH) + 1;
             int day = calendar.get(Calendar.DAY_OF_MONTH);
             int hour = calendar.get(Calendar.HOUR_OF_DAY);
-            int minute = calendar.get(Calendar.MINUTE) + 1;
+            int minute = calendar.get(Calendar.MINUTE);
 
             int poweroffTime[] = {year, month, day, hour, minute};
 

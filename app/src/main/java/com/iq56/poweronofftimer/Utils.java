@@ -114,6 +114,21 @@ public class Utils {
         sb.append(sharedPreferences.getInt(KEY_POWER_OFF_MINUTE, -1));
         sb.append("\n");
 
+        sb.append(KEY_ALLOWED_POWER_ONOFF);
+        sb.append(":");
+        sb.append(sharedPreferences.getBoolean(KEY_ALLOWED_POWER_ONOFF, false));
+        sb.append("\n");
+
+        sb.append(KEY_POWERON_TIME);
+        sb.append(":");
+        sb.append(sharedPreferences.getString(KEY_ALLOWED_POWER_ONOFF, ""));
+        sb.append("\n");
+
+        sb.append(KEY_POWEROFF_TIME);
+        sb.append(":");
+        sb.append(sharedPreferences.getString(KEY_ALLOWED_POWER_ONOFF, ""));
+        sb.append("\n");
+
         sb.append("=====================================");
         sb.append("\n");
         sb.append("\n");
