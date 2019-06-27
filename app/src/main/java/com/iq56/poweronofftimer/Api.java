@@ -8,7 +8,6 @@ import android.util.Log;
 
 import java.util.Arrays;
 
-
 import static com.iq56.poweronofftimer.Utils.KEY_POWEROFF_TIME;
 import static com.iq56.poweronofftimer.Utils.KEY_POWERON_TIME;
 import static com.iq56.poweronofftimer.Utils.TAG;
@@ -30,17 +29,6 @@ public class Api {
     }
 
     /**
-     * @param datetime [year,month,day, hour,minute]
-     */
-    public void sendSetPowerOnBroadcast(int[] datetime) {
-        Log.i(TAG, "sendSetPowerOnBroadcast : " + Arrays.toString(datetime));
-        Intent intent = new Intent(ACTION_SET_POWERONOFF);
-        intent.putExtra(EXTRA_TIME_ON, datetime);
-        intent.putExtra(EXTRA_ENABLE, true);
-        mContext.sendBroadcast(intent);
-    }
-
-    /**
      * @param poweronTime [year,month,day, hour,minute]
      */
     public void sendSetPowerOnOffBroadcast(int[] poweronTime, int[] poweroffTime) {
@@ -48,17 +36,6 @@ public class Api {
         Intent intent = new Intent(ACTION_SET_POWERONOFF);
         intent.putExtra(EXTRA_TIME_ON, poweronTime);
         intent.putExtra(EXTRA_TIME_OFF, poweroffTime);
-        intent.putExtra(EXTRA_ENABLE, true);
-        mContext.sendBroadcast(intent);
-    }
-
-    /**
-     * @param datetime [year,month,day, hour,minute]
-     */
-    public void sendSetPowerOffBroadcast(int[] datetime) {
-        Log.i(TAG, "sendSetPowerOffBroadcast : " + Arrays.toString(datetime));
-        Intent intent = new Intent(ACTION_SET_POWERONOFF);
-        intent.putExtra(EXTRA_TIME_OFF, datetime);
         intent.putExtra(EXTRA_ENABLE, true);
         mContext.sendBroadcast(intent);
     }

@@ -15,10 +15,6 @@ public class Utils {
     public static final String KEY_POWERON_TIME = "poweron_time";
     public static final String KEY_POWEROFF_TIME = "poweroff_time";
 
-    public static final String ACTION_POWER_ON = "com.iq56.poweronofftimer.poweron";
-    public static final String ACTION_POWER_OFF = "com.iq56.poweronofftimer.poweroff";
-
-
     public static final String KEY_POWER_ON_HOUR = "poweron_hour";
     public static final String KEY_POWER_ON_MINUTE = "poweron_minute";
     public static final String KEY_POWER_OFF_HOUR = "poweroff_hour";
@@ -28,7 +24,6 @@ public class Utils {
     public static final String MODE_DAILY = "daily";
     public static final String MODE_WEEKLY = "weekly";
 
-    public static final String KEY_REPEAT = "timer_repeat";
     public static final String REPEAT_SUNDAY = "repeat_sunday";
     public static final String REPEAT_MONDAY = "repeat_monday";
     public static final String REPEAT_TUESDAY = "repeat_tuesday";
@@ -38,12 +33,6 @@ public class Utils {
     public static final String REPEAT_SATURDAY = "repeat_saturday";
 
     public static final String[] WEEKDAYS = {"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"};
-
-    public static final int REQUEST_CODE_POWER_ON_OFF = 101;
-
-    public static final int ONE_DAY_INTERVAL = 1000 * 60 * 60 * 24;// 24h
-    public static final int ONE_WEEK_INTERVAL = ONE_DAY_INTERVAL * 7;// A WEEK
-
 
     public static void dump(SharedPreferences sharedPreferences, String info) {
         StringBuilder sb = new StringBuilder();

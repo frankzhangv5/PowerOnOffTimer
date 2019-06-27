@@ -1,9 +1,6 @@
 package com.iq56.poweronofftimer;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
@@ -20,6 +17,8 @@ public class AlarmService extends Service {
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
 
+    private Api mApi;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -28,6 +27,8 @@ public class AlarmService extends Service {
 
         sharedPreferences = getSharedPreferences(this.getPackageName(), MODE_PRIVATE);
         editor = sharedPreferences.edit();
+
+        mApi = new Api(this);
 
         Utils.dump(sharedPreferences, "AlarmService onCreate");
 
@@ -63,7 +64,7 @@ public class AlarmService extends Service {
         Utils.dump(sharedPreferences, "beforeSetAlarm");
 
         boolean allowPowerOnOff = sharedPreferences.getBoolean(KEY_ALLOWED_POWER_ONOFF, false);
-        if(!allowPowerOnOff) {
+        if (!allowPowerOnOff) {
             Log.e(TAG, "not allowed to power on/off");
             return;
         }
@@ -75,11 +76,14 @@ public class AlarmService extends Service {
             setDailyAlarm();
 
         } else if (MODE_WEEKLY.equals(mode)) {
-
+            Calendar calendar = Calendar.getInstance();
+            int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
             for (int i = 0; i < 7; i++) {
-                boolean ret = sharedPreferences.getBoolean("repeat_" + WEEKDAYS[i], false);
-                if (ret) {
-                    setWeeklyAlarm(i + 1);
+                int index = (i + dayOfWeek - 1) % 7;
+                boolean checked = sharedPreferences.getBoolean("repeat_" + WEEKDAYS[index], false);
+                if (checked) {
+                    setWeeklyAlarm(i);
+                    break;
                 }
             }
         } else {
@@ -90,45 +94,11 @@ public class AlarmService extends Service {
 
             setDailyAlarm();
         }
-
-        int powerOnHour = sharedPreferences.getInt(KEY_POWER_ON_HOUR, 7);
-        int powerOnMinute = sharedPreferences.getInt(KEY_POWER_ON_MINUTE, 30);
-        int powerOffHour = sharedPreferences.getInt(KEY_POWER_OFF_HOUR, 21);
-        int powerOffMinute = sharedPreferences.getInt(KEY_POWER_OFF_MINUTE, 30);
-
-        Calendar calendar = Calendar.getInstance();
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH) + 1;
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-
-        int[] poweronTime = {year, month , day, powerOnHour, powerOnMinute};
-        int[] poweroffTime = {year, month , day, powerOffHour, powerOffMinute};
-        new Api(AlarmService.this).sendSetPowerOnOffBroadcast(poweronTime, poweroffTime);
-
-        sharedPreferences.edit().putString(KEY_POWERON_TIME, Arrays.toString(poweronTime)).commit();
-        sharedPreferences.edit().putString(KEY_POWEROFF_TIME, Arrays.toString(poweroffTime)).commit();
     }
 
     public void clearAllAlarmByService() {
         Utils.dump(sharedPreferences, "beforeClearAllAlarm");
-        Intent powerOnIntent = new Intent(AlarmService.this, PowerOnOffAlarm.class);
-        powerOnIntent.setAction(ACTION_POWER_ON);
-        PendingIntent powerOnSender = PendingIntent.getBroadcast(AlarmService.this,
-                REQUEST_CODE_POWER_ON_OFF, powerOnIntent, PendingIntent.FLAG_NO_CREATE);
-
-        // Schedule the alarm!
-        AlarmManager am = (AlarmManager) AlarmService.this
-                .getSystemService(Context.ALARM_SERVICE);
-        am.cancel(powerOnSender);
-
-        Intent powerOffIntent = new Intent(AlarmService.this, PowerOnOffAlarm.class);
-        powerOffIntent.setAction(ACTION_POWER_OFF);
-        PendingIntent powerOffSender = PendingIntent.getBroadcast(AlarmService.this,
-                REQUEST_CODE_POWER_ON_OFF, powerOffIntent, PendingIntent.FLAG_NO_CREATE);
-
-        am.cancel(powerOffSender);
-
-        new Api(AlarmService.this).sendClearPowerOnOffBroadcast();
+        mApi.sendClearPowerOnOffBroadcast();
     }
 
     private void setDailyAlarm() {
@@ -138,69 +108,73 @@ public class AlarmService extends Service {
         int powerOffMinute = sharedPreferences.getInt(KEY_POWER_OFF_MINUTE, 30);
 
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, powerOnHour);
-        calendar.set(Calendar.MINUTE, powerOnMinute);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH) + 1;
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
 
-        Intent powerOnIntent = new Intent(AlarmService.this, PowerOnOffAlarm.class);
-        powerOnIntent.setAction(ACTION_POWER_ON);
-        PendingIntent powerOnSender = PendingIntent.getBroadcast(AlarmService.this,
-                REQUEST_CODE_POWER_ON_OFF, powerOnIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        int[] poweronTime = {year, month, day, powerOnHour, powerOnMinute};
+        int[] poweroffTime = {year, month, day, powerOffHour, powerOffMinute};
 
-        // Schedule the alarm!
-        AlarmManager am = (AlarmManager) AlarmService.this
-                .getSystemService(Context.ALARM_SERVICE);
-        am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-                ONE_DAY_INTERVAL, powerOnSender);
+        if (powerOnHour < hour || (powerOnHour == hour && powerOnMinute < minute)) {
+            poweronTime[2] += 1;
+        }
 
-        Intent powerOffIntent = new Intent(AlarmService.this, PowerOnOffAlarm.class);
-        powerOffIntent.setAction(ACTION_POWER_OFF);
-        PendingIntent powerOffSender = PendingIntent.getBroadcast(AlarmService.this,
-                REQUEST_CODE_POWER_ON_OFF, powerOffIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        if (powerOffHour < hour || (powerOffHour == hour && powerOffMinute < minute)) {
+            poweroffTime[2] += 1;
+        }
 
-        calendar.set(Calendar.HOUR_OF_DAY, powerOffHour);
-        calendar.set(Calendar.MINUTE, powerOffMinute);
+        mApi.sendClearPowerOnOffBroadcast();
 
-        am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-                ONE_DAY_INTERVAL, powerOffSender);
+        sharedPreferences.edit().putString(KEY_POWERON_TIME, Arrays.toString(poweronTime)).commit();
+        sharedPreferences.edit().putString(KEY_POWEROFF_TIME, Arrays.toString(poweroffTime)).commit();
 
-
+        mApi.sendSetPowerOnOffBroadcast(poweronTime, poweroffTime);
     }
 
-    private void setWeeklyAlarm(int dayOfWeek) {
+    private void setWeeklyAlarm(int deltaDays) {
         int powerOnHour = sharedPreferences.getInt(KEY_POWER_ON_HOUR, 7);
         int powerOnMinute = sharedPreferences.getInt(KEY_POWER_ON_MINUTE, 30);
         int powerOffHour = sharedPreferences.getInt(KEY_POWER_OFF_HOUR, 21);
         int powerOffMinute = sharedPreferences.getInt(KEY_POWER_OFF_MINUTE, 30);
 
-        final Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.DAY_OF_WEEK, dayOfWeek);
-        calendar.set(Calendar.HOUR_OF_DAY, powerOnHour);
-        calendar.set(Calendar.MINUTE, powerOnMinute);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH) + 1;
+        int day = calendar.get(Calendar.DAY_OF_MONTH) + deltaDays;
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
 
-        Intent powerOnIntent = new Intent(AlarmService.this, PowerOnOffAlarm.class);
-        powerOnIntent.setAction(ACTION_POWER_ON);
-        PendingIntent powerOnSender = PendingIntent.getBroadcast(AlarmService.this,
-                REQUEST_CODE_POWER_ON_OFF, powerOnIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        int[] poweronTime = {year, month, day, powerOnHour, powerOnMinute};
+        int[] poweroffTime = {year, month, day, powerOffHour, powerOffMinute};
 
-        AlarmManager am = (AlarmManager) AlarmService.this
-                .getSystemService(Context.ALARM_SERVICE);
-        am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-                ONE_WEEK_INTERVAL, powerOnSender);
+        if (deltaDays == 0) {
+            int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+            int delta = 0;
+            for (int i = 0; i < 7; i++) {
+                int index = (i + dayOfWeek - 1) % 7;
+                boolean checked = sharedPreferences.getBoolean("repeat_" + WEEKDAYS[index], false);
+                if (checked && i > 0) {
+                    delta = i;
+                    break;
+                }
+            }
+            if (powerOnHour < hour || (powerOnHour == hour && powerOnMinute < minute)) {
+                poweronTime[2] += delta;
+            }
 
+            if (powerOffHour < hour || (powerOffHour == hour && powerOffMinute < minute)) {
+                poweroffTime[2] += delta;
+            }
+        }
 
-        calendar.set(Calendar.HOUR_OF_DAY, powerOffHour);
-        calendar.set(Calendar.MINUTE, powerOffMinute);
+        mApi.sendClearPowerOnOffBroadcast();
 
-        Intent powerOffIntent = new Intent(AlarmService.this, PowerOnOffAlarm.class);
-        powerOffIntent.setAction(ACTION_POWER_OFF);
-        PendingIntent powerOffSender = PendingIntent.getBroadcast(AlarmService.this,
-                REQUEST_CODE_POWER_ON_OFF, powerOffIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-                ONE_WEEK_INTERVAL, powerOffSender);
+        sharedPreferences.edit().putString(KEY_POWERON_TIME, Arrays.toString(poweronTime)).commit();
+        sharedPreferences.edit().putString(KEY_POWEROFF_TIME, Arrays.toString(poweroffTime)).commit();
+
+        mApi.sendSetPowerOnOffBroadcast(poweronTime, poweroffTime);
     }
 
     @Override
