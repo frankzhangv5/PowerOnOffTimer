@@ -117,7 +117,7 @@ public class AlarmService extends Service {
         int[] poweronTime = {year, month, day, powerOnHour, powerOnMinute};
         int[] poweroffTime = {year, month, day, powerOffHour, powerOffMinute};
 
-        if (powerOnHour < hour || (powerOnHour == hour && powerOnMinute < minute)) {
+        if (powerOnHour < hour || (powerOnHour == hour && powerOnMinute <= minute)) {
             poweronTime[2] += 1;
         }
 
@@ -160,7 +160,7 @@ public class AlarmService extends Service {
                     break;
                 }
             }
-            if (powerOnHour < hour || (powerOnHour == hour && powerOnMinute < minute)) {
+            if (powerOnHour < hour || (powerOnHour == hour && powerOnMinute <= minute)) {
                 poweronTime[2] += delta;
             }
 
